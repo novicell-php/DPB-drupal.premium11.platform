@@ -1,0 +1,6 @@
+[submodule "backend"]
+	path = backend
+	url = https://github.com/novicell-php/DPB-drupal.premium11
+[submodule "frontend"]
+	path = frontend
+	url = https://github.com/novicell-php/DPB-drupal.premium11.headless
