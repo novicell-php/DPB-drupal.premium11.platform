@@ -24,7 +24,7 @@ solr:
     # (https://docs.platform.sh/add-services/solr.html#supported-versions)
     # when choosing a version. If you specify a version number which is not available,
     # the CLI will return an error.
-    type: 'solr:9.8'
+    type: 'solr:9.6'
     disk: 2048
     configuration:
         cores:
