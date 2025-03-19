@@ -3,11 +3,6 @@
 # Each route describes how an incoming URL is going
 # to be processed by Platform.sh.
 
-# Default
-"https://api.{default}/":
-  type: upstream
-  upstream: "backend:http"
-
 # Drupal backend
 "https://api.drupal.dk/":
   type: upstream
