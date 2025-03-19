@@ -18,19 +18,19 @@ redis:
     # when choosing a version. If you specify a version number which is not available,
     # the CLI will return an error.
     type: redis:7.2
-solr:
-    # The type of your service (solr), which uses the format
-    # 'type:version'. Be sure to consult the Solr documentation
-    # (https://docs.platform.sh/add-services/solr.html#supported-versions)
-    # when choosing a version. If you specify a version number which is not available,
-    # the CLI will return an error.
-    type: 'solr:9.6'
-    disk: 2048
-    configuration:
-        cores:
-            premium:
-                conf_dir: !archive "solr-conf/premium"
-        endpoints:
-            main:
-                core: premium
+# solr:
+#     # The type of your service (solr), which uses the format
+#     # 'type:version'. Be sure to consult the Solr documentation
+#     # (https://docs.platform.sh/add-services/solr.html#supported-versions)
+#     # when choosing a version. If you specify a version number which is not available,
+#     # the CLI will return an error.
+#     type: 'solr:9.6'
+#     disk: 2048
+#     configuration:
+#         cores:
+#             premium:
+#                 conf_dir: !archive "solr-conf/premium"
+#         endpoints:
+#             main:
+#                 core: premium
 
