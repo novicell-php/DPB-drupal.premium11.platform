@@ -4,11 +4,15 @@
 # to be processed by Platform.sh.
 
 # Drupal backend
-"https://api.drupal.dk/":
+"https://premium.drupal.dk/":
   type: upstream
   upstream: "backend:http"
 
+"https://api.drupal.dk/":
+  type: redirect
+  to: "https://premium.drupal.dk"
+
 # Drupal frontends
-"https://headless.drupal.dk/":
+"https://headless.premium.drupal.dk/":
   type: upstream
   upstream: "frontend:http"
