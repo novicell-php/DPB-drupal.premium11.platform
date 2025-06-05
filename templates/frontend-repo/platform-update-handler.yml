@@ -4,6 +4,9 @@ on:
   repository_dispatch:
     types: [platform-update]
 
+permissions:
+  contents: write
+
 jobs:
   handle-platform-update:
     runs-on: ubuntu-latest
@@ -38,18 +41,18 @@ jobs:
           git fetch origin
           git checkout ${TARGET_BRANCH} || git checkout -b ${TARGET_BRANCH} origin/${TARGET_BRANCH}
           git pull origin ${TARGET_BRANCH}
-          
+
           # Setup the configuration for the git user
           git config --global user.name "GitHub Actions"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          
+
           # Check if we need to update to the specified commit
           CURRENT_COMMIT=$(git rev-parse HEAD)
           TARGET_COMMIT="${{ github.event.client_payload.commit }}"
-          
+
           if [ "$CURRENT_COMMIT" != "$TARGET_COMMIT" ]; then
             echo "Current commit ($CURRENT_COMMIT) differs from target commit ($TARGET_COMMIT)"
-            
+
             # Check if the target commit exists in this repository
             if git cat-file -e $TARGET_COMMIT 2>/dev/null; then
               echo "Target commit exists, checking it out"
