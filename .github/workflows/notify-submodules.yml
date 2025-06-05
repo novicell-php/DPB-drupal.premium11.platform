@@ -1,0 +1,70 @@
+name: Notify Submodules of Updates
+
+on:
+  push:
+    branches:
+      - 'staging'
+      - 'main'
+    paths:
+      - 'backend/**'
+      - 'frontend/**'
+
+permissions:
+  contents: read
+
+jobs:
+  notify-backend:
+    runs-on: ubuntu-latest
+    if: contains(github.event.commits[0].modified, 'backend/') || contains(github.event.commits[0].added, 'backend/') || contains(github.event.commits[0].removed, 'backend/')
+    steps:
+      - name: Determine environment
+        id: env
+        run: |
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "ENVIRONMENT=production" >> $GITHUB_ENV
+          else
+            echo "ENVIRONMENT=staging" >> $GITHUB_ENV
+          fi
+          echo "Environment: ${{ env.ENVIRONMENT }}"
+
+      - name: Get commit hash
+        id: commit
+        run: |
+          echo "COMMIT_HASH=${{ github.sha }}" >> $GITHUB_ENV
+          echo "Commit hash: ${{ env.COMMIT_HASH }}"
+
+      - name: Notify backend repository
+        uses: peter-evans/repository-dispatch@v2
+        with:
+          token: ${{ secrets.REPO_ACCESS_TOKEN }}
+          repository: novicell-php/DPB-drupal.premium11
+          event-type: platform-update
+          client-payload: '{"submodule": "backend", "environment": "${{ env.ENVIRONMENT }}", "commit": "${{ env.COMMIT_HASH }}"}'
+
+  notify-frontend:
+    runs-on: ubuntu-latest
+    if: contains(github.event.commits[0].modified, 'frontend/') || contains(github.event.commits[0].added, 'frontend/') || contains(github.event.commits[0].removed, 'frontend/')
+    steps:
+      - name: Determine environment
+        id: env
+        run: |
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "ENVIRONMENT=production" >> $GITHUB_ENV
+          else
+            echo "ENVIRONMENT=staging" >> $GITHUB_ENV
+          fi
+          echo "Environment: ${{ env.ENVIRONMENT }}"
+
+      - name: Get commit hash
+        id: commit
+        run: |
+          echo "COMMIT_HASH=${{ github.sha }}" >> $GITHUB_ENV
+          echo "Commit hash: ${{ env.COMMIT_HASH }}"
+
+      - name: Notify frontend repository
+        uses: peter-evans/repository-dispatch@v2
+        with:
+          token: ${{ secrets.REPO_ACCESS_TOKEN }}
+          repository: novicell-php/DPB-drupal.premium11.headless
+          event-type: platform-update
+          client-payload: '{"submodule": "frontend", "environment": "${{ env.ENVIRONMENT }}", "commit": "${{ env.COMMIT_HASH }}"}'

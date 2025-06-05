@@ -4,6 +4,9 @@ on:
   repository_dispatch:
     types: [update-submodule]
 
+permissions:
+  contents: write
+
 jobs:
   update_submodule:
     runs-on: ubuntu-latest
@@ -19,42 +22,62 @@ jobs:
           echo "Commit: ${{ github.event.client_payload.commit }}"
 
       - name: Checkout Repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           submodules: true
           fetch-depth: 0
-          ref: main
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Identify the submodule to update
         id: submodule
         run: |
           echo "SUBMODULE=${{ github.event.client_payload.submodule }}" >> $GITHUB_ENV
           echo "COMMIT=${{ github.event.client_payload.commit }}" >> $GITHUB_ENV
-          # If the environment payload is production, we are going to main branch, else we are going to develop branch
-          if [[ ${{ github.event.client_payload.environment }} == "production" ]]; then
+          # If the environment payload is production, we are going to main branch, else we are going to staging branch
+          if [[ "${{ github.event.client_payload.environment }}" == "production" ]]; then
             echo "TARGET_BRANCH=main" >> $GITHUB_ENV
           else
             echo "TARGET_BRANCH=staging" >> $GITHUB_ENV
           fi
+          echo "Target branch: ${TARGET_BRANCH}"
 
       - name: Update submodule
         run: |
           # Checkout the target branch in the platform repo
-          git checkout ${TARGET_BRANCH}
+          git fetch origin
+          git checkout ${TARGET_BRANCH} || git checkout -b ${TARGET_BRANCH} origin/${TARGET_BRANCH}
+
           # Setup the configuration for the git user
           git config --global user.name "GitHub Actions"
-          git config --global user.email "support@novicell.dk"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+          echo "Updating submodule ${SUBMODULE} to commit ${COMMIT} on branch ${TARGET_BRANCH}"
+
           # Update the submodule
-          git submodule update --remote -- ${SUBMODULE}
+          git submodule update --init -- ${SUBMODULE}
+
           # Enter the submodule
           cd ${SUBMODULE}
+
+          # Fetch all from the submodule repository
+          git fetch --all
+
           # Checkout submodule to commit hash
           git checkout ${COMMIT}
-          cd -
+          cd ..
+
           # Add the submodule changes
           git add ${SUBMODULE}
+
+          # Check if there are changes to commit
+          if git diff --staged --quiet; then
+            echo "No changes to commit for submodule ${SUBMODULE}"
+            exit 0
+          fi
+
           # Commit the submodule changes
           git commit -m "Updated ${SUBMODULE} submodule to commit ${COMMIT} on branch ${TARGET_BRANCH}"
+
           # Push the submodule changes
           git push origin ${TARGET_BRANCH}
         env:

@@ -1,0 +1,47 @@
+name: Update the Platform Repository
+
+on:
+  push:
+    branches:
+      - 'release/**'
+      - 'staging'
+      - 'main'
+
+permissions:
+  contents: read
+
+jobs:
+  update-platform-repo:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Determine environment
+        id: env
+        run: |
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "ENVIRONMENT=production" >> $GITHUB_ENV
+          else
+            echo "ENVIRONMENT=staging" >> $GITHUB_ENV
+          fi
+          echo "Environment: ${{ env.ENVIRONMENT }}"
+
+      - name: Get commit hash
+        id: commit
+        run: |
+          echo "COMMIT_HASH=${{ github.sha }}" >> $GITHUB_ENV
+          echo "Commit hash: ${{ env.COMMIT_HASH }}"
+
+      - name: Log payload
+        run: |
+          echo "Sending payload:"
+          echo "================="
+          echo "Submodule: backend"
+          echo "Environment: ${{ env.ENVIRONMENT }}"
+          echo "Commit: ${{ env.COMMIT_HASH }}"
+
+      - name: Trigger platform repository update
+        uses: peter-evans/repository-dispatch@v2
+        with:
+          token: ${{ secrets.REPO_ACCESS_TOKEN }}
+          repository: novicell-php/DPB-drupal.premium11.platform
+          event-type: update-submodule
+          client-payload: '{"submodule": "backend", "environment": "${{ env.ENVIRONMENT }}", "commit": "${{ env.COMMIT_HASH }}"}'

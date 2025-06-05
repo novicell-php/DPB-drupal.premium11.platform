@@ -1,0 +1,60 @@
+name: Auto Merge Release Branches to Staging
+
+on:
+  push:
+    branches:
+      - 'release/**'
+      - 'main'
+
+permissions:
+  contents: write
+
+jobs:
+  merge-to-staging:
+    runs-on: ubuntu-latest
+    if: github.ref != 'refs/heads/staging' # Skip if already on staging branch
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 # Fetch all history for all tags and branches
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure Git
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Determine source branch
+        id: branch
+        run: |
+          BRANCH_NAME=${GITHUB_REF#refs/heads/}
+          echo "SOURCE_BRANCH=$BRANCH_NAME" >> $GITHUB_ENV
+          echo "Source branch: $BRANCH_NAME"
+
+      - name: Merge to staging branch
+        run: |
+          # Fetch all branches
+          git fetch origin
+
+          # Check if staging branch exists, create it if not
+          if ! git show-ref --verify --quiet refs/remotes/origin/staging; then
+            echo "Staging branch does not exist, creating it from main"
+            git checkout -b staging origin/main
+          else
+            echo "Checking out existing staging branch"
+            git checkout staging || git checkout -b staging origin/staging
+            git pull origin staging
+          fi
+
+          echo "Merging ${SOURCE_BRANCH} into staging"
+
+          # Attempt to merge
+          if git merge origin/${SOURCE_BRANCH} --no-ff -m "Merging ${SOURCE_BRANCH} into staging [skip ci]"; then
+            echo "Merge successful, pushing to staging"
+            git push origin staging
+          else
+            echo "Merge conflict detected, aborting merge"
+            git merge --abort
+            exit 1
+          fi
